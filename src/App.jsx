@@ -8,7 +8,7 @@ function App() {
       try {
         const response = await getJson({
           engine: "google",
-          api_key: "bc6d8a1c09a9cf011f1ba830c5a26c6289944148aeee03cac5ac4f36afa53897",
+          api_key: "",
           q: "coffee",
           location: "Austin, Texas",
         });
