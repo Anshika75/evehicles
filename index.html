@@ -1,17 +1,3 @@
-<!-- <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html> -->
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -27,7 +13,7 @@
   <div id="form">
     <input value="76.575019,30.771792" type="text" id="start" placeholder="Enter start location" />
     <input value="76.195,28.5981067" type="text" id="end" placeholder="Enter destination" />
-    <button onclick="getRoute()">Get Route</button>
+    <button onclick='FormSubmitGetRoute()'>Get Route</button>
   </div>
   <div id='map'></div>
 
@@ -40,9 +26,11 @@
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v11',
-      center: [-74.5, 40],
+      center: [76.575019, 30.771792],
       zoom: 9
     });
+
+    const MAX_COVERAGE = 30; // in kilometers
 
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
@@ -51,62 +39,235 @@
 
     map.addControl(new mapboxgl.NavigationControl());
     map.addControl(geocoder);
+    var StartCoord, DestCoord;
+    const chargingStations = [{"name":"Lightning Charge","coordinates":[76.60463540240931,30.73069331062233]},{"name":"Tripuranagar Gas Station","coordinates":[76.60463540240931,30.64705849794281]},{"name":"GreenCharge","coordinates":[76.68287897245978,30.52583935619664]},{"name":"Jay Station","coordinates":[76.62633204550559,30.493360909092743]},{"name":"GreenCharge","coordinates":[76.55800450876723,30.436497533982518]},{"name":"Jay Station","coordinates":[76.68790897187125,30.43649753398391]},{"name":"Jay Station","coordinates":[76.44357884630023,30.33207558596331]},{"name":"EcoPower Station","coordinates":[76.7384914728558,30.226881893976127]},{"name":"EcoPower Station","coordinates":[76.67764221751912,30.031405544990662]},{"name":"Lightning Charge","coordinates":[76.10392066720243,30.226881893976042]},{"name":"Jay Station","coordinates":[76.02568591034031,29.993769606458585]},{"name":"GreenCharge","coordinates":[76.89496098657833,29.865700703008457]},{"name":"GreenCharge","coordinates":[76.55492914795053,29.59855355801315]},{"name":"GreenCharge","coordinates":[76.50424111014308,29.439763855832794]},{"name":"Lightning Charge","coordinates":[76.45355307233706,29.28072539532326]},{"name":"Tripuranagar Gas Station","coordinates":[76.02777355476047,29.37794507900233]},{"name":"EcoPower Station","coordinates":[76.13928723793595,29.78349270271697]},{"name":"Jay Station","coordinates":[77.00098388064845,29.466246103568523]},{"name":"GreenCharge","coordinates":[76.43327785721436,29.174561969154595]},{"name":"Lightning Charge","coordinates":[76.43327785721436,29.041703117314185]},{"name":"GreenCharge","coordinates":[76.41300264209167,28.93529268811902]},{"name":"EcoPower Station","coordinates":[76.95029584284237,29.333765803790584]},{"name":"Lightning Charge","coordinates":[77.03139670333314,29.156857369704426]},{"name":"GreenCharge","coordinates":[76.96043345040306,29.041703117314185]},{"name":"Lightning Charge","coordinates":[76.90974541259703,28.8287728919466]},{"name":"EcoPower Station","coordinates":[76.78809412186081,28.73103388833404]},{"name":"GreenCharge","coordinates":[76.66644283112464,28.59760603363361]},{"name":"Lightning Charge","coordinates":[76.49410350258245,28.59760603363361]},{"name":"GreenCharge","coordinates":[76.37245221184628,28.51746787588816]},{"name":"EcoPower Station","coordinates":[76.21025049086472,28.526375127485537]}];
 
-    function getRoute() {
+    function FormSubmitGetRoute(){
       const start = document.getElementById('start').value;
       const end = document.getElementById('end').value;
 
+      StartCoord = start.split(",");
+      DestCoord = end.split(",");
+      getRoute();
+    }
+
+    function getRoute(init=false) {
       if (!start || !end) {
         alert('Please enter both start and end locations.');
         return;
       }
+      // if(!init){
+      // const directionsRequest = `https://api.mapbox.com/directions/v5/mapbox/driving/${encodeURIComponent(start)};${encodeURIComponent(end)}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
 
-      const directionsRequest = `https://api.mapbox.com/directions/v5/mapbox/driving/${encodeURIComponent(start)};${encodeURIComponent(end)}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+      // fetch(directionsRequest)
+      //   .then(response => response.json())
+      //   .then(data => {
+      //     const route = data.routes[0].geometry.coordinates;
+      //     const geojson = {
+      //       type: 'Feature',
+      //       properties: {},
+      //       geometry: {
+      //         type: 'LineString',
+      //         coordinates: route
+      //       }
+      //     };
 
-      fetch(directionsRequest)
-        .then(response => response.json())
-        .then(data => {
-          const route = data.routes[0].geometry.coordinates;
-          const geojson = {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: route
+      //     if (map.getSource('route')) {
+      //       map.getSource('route').setData(geojson);
+      //     } else {
+      //       map.addLayer({
+      //         id: 'route',
+      //         type: 'line',
+      //         source: {
+      //           type: 'geojson',
+      //           data: geojson
+      //         },
+      //         layout: {
+      //           'line-join': 'round',
+      //           'line-cap': 'round'
+      //         },
+      //         paint: {
+      //           'line-color': '#3887be',
+      //           'line-width': 5,
+      //           'line-opacity': 0.75
+      //         }
+      //       });
+      //     }
+
+      //     const bounds = new mapboxgl.LngLatBounds();
+      //     route.forEach(coord => bounds.extend(coord));
+      //     map.fitBounds(bounds, { padding: 20 });
+      //     new mapboxgl.Marker().setLngLat(StartCoord).addTo(map);
+      //     new mapboxgl.Marker().setLngLat(DestCoord).addTo(map);
+
+      //   })
+      //   .catch(err => {
+      //     console.error('Error fetching directions:', err);
+      //     alert('Could not get route. Please check your locations and try again.');
+      //   });
+
+      // }
+        // Lets find the nearest charging station and also that should be close to destination and MAX_COVERAGE distance from start or less and update the start and after 2 seconds start route from that station
+        setTimeout(() => {
+          let nearestStation = null;
+          let minDistance = Infinity;
+          let distance = 0;
+          for (const station of chargingStations) {
+            if(station.isVisited){
+              continue;
             }
-          };
-
-          if (map.getSource('route')) {
-            map.getSource('route').setData(geojson);
-          } else {
-            map.addLayer({
-              id: 'route',
-              type: 'line',
-              source: {
-                type: 'geojson',
-                data: geojson
-              },
-              layout: {
-                'line-join': 'round',
-                'line-cap': 'round'
-              },
-              paint: {
-                'line-color': '#3887be',
-                'line-width': 5,
-                'line-opacity': 0.75
-              }
-            });
+            distance = getDistance(StartCoord, station.coordinates);
+            if (distance < minDistance) {
+              minDistance = distance;
+              nearestStation = station;
+              station.isVisited = true;
+            }
           }
 
-          const bounds = new mapboxgl.LngLatBounds();
-          route.forEach(coord => bounds.extend(coord));
-          map.fitBounds(bounds, { padding: 20 });
-        })
-        .catch(err => {
-          console.error('Error fetching directions:', err);
-          alert('Could not get route. Please check your locations and try again.');
-        });
+
+          if(nearestStation){
+            if(minDistance <= MAX_COVERAGE){
+              console.log('Station is within coverage area');
+            }else{
+              console.log('Station is not within coverage area');
+              alert(`Station is not within coverage area you need to travel ${minDistance - MAX_COVERAGE} km more to reach the station`);
+              console.log('Distance:', minDistance);
+              nearestStation = null;
+              return;
+            }
+          }
+
+          if (nearestStation) {
+            console.log('Nearest Station:', nearestStation);
+            const directionsRequest = `https://api.mapbox.com/directions/v5/mapbox/driving/${StartCoord[0]},${StartCoord[1]};${nearestStation.coordinates[0]},${nearestStation.coordinates[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+            console.log('StartCoord:', StartCoord);
+            console.log('Nearest Station:', nearestStation);
+            StartCoord = nearestStation.coordinates;
+            
+            fetch(directionsRequest)
+              .then(response => response.json())
+              .then(data => {
+                const route = data.routes[0].geometry.coordinates;
+                const geojson = {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: route
+                  }
+                };
+
+                if (map.getSource('route')) {
+                  map.getSource('route').setData(geojson);
+                } else {
+                  map.addLayer({
+                    id: 'route',
+                    type: 'line',
+                    source: {
+                      type: 'geojson',
+                      data: geojson
+                    },
+                    layout: {
+                      'line-join': 'round',
+                      'line-cap': 'round'
+                    },
+                    paint: {
+                      'line-color': genRandomHexColor(),
+                      'line-width': 5,
+                      'line-opacity': 0.75
+                    }
+                  });
+                }
+
+                const bounds = new mapboxgl.LngLatBounds();
+                route.forEach(coord => bounds.extend(coord));
+                map.fitBounds(bounds, { padding: 20 });
+                // new mapboxgl.Marker().setLngLat(StartCoord).addTo(map);
+                // new mapboxgl.Marker().setLngLat(DestCoord).addTo(map);
+
+                // add colorful marker for start and end
+
+                new mapboxgl.Marker({color: 'red'}).setLngLat(StartCoord).addTo(map);
+                new mapboxgl.Marker({color: 'green'}).setLngLat(nearestStation.coordinates).addTo(map);
+
+              })
+              .catch(err => {
+                console.error('Error fetching directions:', err);
+                alert('Could not get route. Please check your locations and try again.');
+              });
+
+            getRoute();
+          } else {
+            console.log('No station found within coverage area.');
+          }
+        }, 2000);
+        console.log(StartCoord, DestCoord);
     }
+
+    function getRandomName() {
+      const names = ['Jay Station', 'Tripuranagar Gas Station', 'GreenCharge', 'EcoPower Station', 'Lightning Charge'];
+      return names[Math.floor(Math.random() * names.length)];
+    }
+
+    function fillStations(){
+      for(var station of chargingStations){
+        console.log(station);
+        new mapboxgl.Marker({
+          color: 'blue',
+          draggable: true,
+          scale: 0.5,
+          rotation: 45,
+          pitchAlignment: 'auto',
+        }).setLngLat(station.coordinates)
+        .setPopup(new mapboxgl.Popup().setText(station.name))
+        .addTo(map);
+      }
+    }
+    fillStations();
+    function getDistance(coord1, coord2) {
+      const lat1 = coord1[1];
+      const lon1 = coord1[0];
+      const lat2 = coord2[1];
+      const lon2 = coord2[0];
+
+      const R = 6371; // Radius of the earth in km
+      const dLat = deg2rad(lat2 - lat1);
+      const dLon = deg2rad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        ;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const d = R * c; // Distance in km
+      return d;
+    }
+
+    function deg2rad(deg) {
+      return deg * (Math.PI / 180);
+    }
+
+    function genRandomHexColor(){
+      return '#'+Math.floor(Math.random()*16777215).toString(16);
+    }
+
+    // map.on('click', (e) => {
+    //   const coordinates = e.lngLat;
+    //   const name = getRandomName();
+    //   const station = {
+    //     name: name,
+    //     coordinates: [coordinates.lng, coordinates.lat]
+    //   };
+    //   chargingStations.push(station);
+
+    //   new mapboxgl.Marker()
+    //     .setLngLat([coordinates.lng, coordinates.lat])
+    //     .setPopup(new mapboxgl.Popup().setText(name))
+    //     .addTo(map);
+
+    //   console.log('Charging Stations:', chargingStations);
+    //   console.log(JSON.stringify(chargingStations));
+    // });
   </script>
 </body>
 </html>
