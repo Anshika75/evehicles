@@ -51,193 +51,159 @@
       getRoute();
     }
 
-    function getRoute(init=false) {
-      if (!start || !end) {
+    function getRoute() {
+      if (!StartCoord || !DestCoord) {
         alert('Please enter both start and end locations.');
         return;
       }
-      // if(!init){
-      // const directionsRequest = `https://api.mapbox.com/directions/v5/mapbox/driving/${encodeURIComponent(start)};${encodeURIComponent(end)}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
 
-      // fetch(directionsRequest)
-      //   .then(response => response.json())
-      //   .then(data => {
-      //     const route = data.routes[0].geometry.coordinates;
-      //     const geojson = {
-      //       type: 'Feature',
-      //       properties: {},
-      //       geometry: {
-      //         type: 'LineString',
-      //         coordinates: route
-      //       }
-      //     };
+      const route = findOptimalRoute(StartCoord, DestCoord);
 
-      //     if (map.getSource('route')) {
-      //       map.getSource('route').setData(geojson);
-      //     } else {
-      //       map.addLayer({
-      //         id: 'route',
-      //         type: 'line',
-      //         source: {
-      //           type: 'geojson',
-      //           data: geojson
-      //         },
-      //         layout: {
-      //           'line-join': 'round',
-      //           'line-cap': 'round'
-      //         },
-      //         paint: {
-      //           'line-color': '#3887be',
-      //           'line-width': 5,
-      //           'line-opacity': 0.75
-      //         }
-      //       });
-      //     }
-
-      //     const bounds = new mapboxgl.LngLatBounds();
-      //     route.forEach(coord => bounds.extend(coord));
-      //     map.fitBounds(bounds, { padding: 20 });
-      //     new mapboxgl.Marker().setLngLat(StartCoord).addTo(map);
-      //     new mapboxgl.Marker().setLngLat(DestCoord).addTo(map);
-
-      //   })
-      //   .catch(err => {
-      //     console.error('Error fetching directions:', err);
-      //     alert('Could not get route. Please check your locations and try again.');
-      //   });
-
-      // }
-        // Lets find the nearest charging station and also that should be close to destination and MAX_COVERAGE distance from start or less and update the start and after 2 seconds start route from that station
-        setTimeout(() => {
-          let nearestStation = null;
-          let minDistance = Infinity;
-          let distance = 0;
-          for (const station of chargingStations) {
-            if(station.isVisited){
-              continue;
-            }
-            distance = getDistance(StartCoord, station.coordinates);
-            if (distance < minDistance) {
-              minDistance = distance;
-              nearestStation = station;
-              station.isVisited = true;
-            }
-          }
-
-
-          if(nearestStation){
-            if(minDistance <= MAX_COVERAGE){
-              console.log('Station is within coverage area');
-            }else{
-              console.log('Station is not within coverage area');
-              alert(`Station is not within coverage area you need to travel ${minDistance - MAX_COVERAGE} km more to reach the station`);
-              console.log('Distance:', minDistance);
-              nearestStation = null;
-              return;
-            }
-          }
-
-          if (nearestStation) {
-            console.log('Nearest Station:', nearestStation);
-            const directionsRequest = `https://api.mapbox.com/directions/v5/mapbox/driving/${StartCoord[0]},${StartCoord[1]};${nearestStation.coordinates[0]},${nearestStation.coordinates[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
-            console.log('StartCoord:', StartCoord);
-            console.log('Nearest Station:', nearestStation);
-            StartCoord = nearestStation.coordinates;
-            
-            fetch(directionsRequest)
-              .then(response => response.json())
-              .then(data => {
-                const route = data.routes[0].geometry.coordinates;
-                const geojson = {
-                  type: 'Feature',
-                  properties: {},
-                  geometry: {
-                    type: 'LineString',
-                    coordinates: route
-                  }
-                };
-
-                if (map.getSource('route')) {
-                  map.getSource('route').setData(geojson);
-                } else {
-                  map.addLayer({
-                    id: 'route',
-                    type: 'line',
-                    source: {
-                      type: 'geojson',
-                      data: geojson
-                    },
-                    layout: {
-                      'line-join': 'round',
-                      'line-cap': 'round'
-                    },
-                    paint: {
-                      'line-color': genRandomHexColor(),
-                      'line-width': 5,
-                      'line-opacity': 0.75
-                    }
-                  });
-                }
-
-                const bounds = new mapboxgl.LngLatBounds();
-                route.forEach(coord => bounds.extend(coord));
-                map.fitBounds(bounds, { padding: 20 });
-                // new mapboxgl.Marker().setLngLat(StartCoord).addTo(map);
-                // new mapboxgl.Marker().setLngLat(DestCoord).addTo(map);
-
-                // add colorful marker for start and end
-
-                new mapboxgl.Marker({color: 'red'}).setLngLat(StartCoord).addTo(map);
-                new mapboxgl.Marker({color: 'green'}).setLngLat(nearestStation.coordinates).addTo(map);
-
-              })
-              .catch(err => {
-                console.error('Error fetching directions:', err);
-                alert('Could not get route. Please check your locations and try again.');
-              });
-
-            getRoute();
-          } else {
-            console.log('No station found within coverage area.');
-          }
-        }, 2000);
-        console.log(StartCoord, DestCoord);
-    }
-
-    function getRandomName() {
-      const names = ['Jay Station', 'Tripuranagar Gas Station', 'GreenCharge', 'EcoPower Station', 'Lightning Charge'];
-      return names[Math.floor(Math.random() * names.length)];
-    }
-
-    function fillStations(){
-      for(var station of chargingStations){
-        console.log(station);
-        new mapboxgl.Marker({
-          color: 'blue',
-          draggable: true,
-          scale: 0.5,
-          rotation: 45,
-          pitchAlignment: 'auto',
-        }).setLngLat(station.coordinates)
-        .setPopup(new mapboxgl.Popup().setText(station.name))
-        .addTo(map);
+      if (route.length > 0) {
+        drawRoute(route);
+      } else {
+        alert('Could not find a route within the coverage limits. Consider alternative routes or recharging options.');
       }
     }
-    fillStations();
-    function getDistance(coord1, coord2) {
-      const lat1 = coord1[1];
-      const lon1 = coord1[0];
-      const lat2 = coord2[1];
-      const lon2 = coord2[0];
 
+    function findOptimalRoute(start, end) {
+      const graph = buildGraph(chargingStations, start, end);
+      const path = dijkstra(graph, start.join(','), end.join(','));
+      if (path.length <= 1) return [];
+      return path.map(point => point.split(',').map(Number));
+    }
+
+    function buildGraph(stations, start, end) {
+      const graph = {};
+      const allPoints = [...stations.map(s => s.coordinates), start, end];
+
+      for (let i = 0; i < allPoints.length; i++) {
+        const point = allPoints[i].join(',');
+        graph[point] = {};
+
+        for (let j = 0; j < allPoints.length; j++) {
+          if (i !== j) {
+            const distance = getDistance(allPoints[i], allPoints[j]);
+            if (distance <= MAX_COVERAGE*2) {
+              graph[point][allPoints[j].join(',')] = distance;
+            }
+          }
+        }
+      }
+      return graph;
+    }
+
+    function dijkstra(graph, start, end) {
+      const distances = {};
+      const previous = {};
+      const queue = new Set(Object.keys(graph));
+
+      for (const point of queue) {
+        distances[point] = Infinity;
+        previous[point] = null;
+      }
+      distances[start] = 0;
+
+      while (queue.size > 0) {
+        const current = Array.from(queue).reduce((min, point) =>
+          distances[point] < distances[min] ? point : min
+        );
+
+        if (current === end) {
+          const path = [];
+          let temp = current;
+
+          while (temp) {
+            path.unshift(temp);
+            temp = previous[temp];
+          }
+          return path;
+        }
+
+        queue.delete(current);
+
+        for (const neighbor in graph[current]) {
+          const alt = distances[current] + graph[current][neighbor];
+
+          if (alt < distances[neighbor]) {
+            distances[neighbor] = alt;
+            previous[neighbor] = current;
+          }
+        }
+      }
+
+      return [];
+    }
+
+    function drawRoute(route) {
+      console.log(route);
+
+      if (route.length === 0) {
+        alert('No valid route found.');
+        return;
+      }
+
+      for (let i = 0; i < route.length - 1; i++) {
+        const segment = [route[i], route[i + 1]];
+        drawSegment(segment);
+      }
+
+      const bounds = new mapboxgl.LngLatBounds();
+      route.forEach(coord => bounds.extend(coord));
+      map.fitBounds(bounds, { padding: 20 });
+
+      new mapboxgl.Marker({ color: 'red' }).setLngLat(route[0]).addTo(map);
+      new mapboxgl.Marker({ color: 'green' }).setLngLat(route[route.length - 1]).addTo(map);
+    }
+
+    function drawSegment(segment) {
+      const geojson = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: segment
+        }
+      };
+
+      map.addLayer({
+        id: `route${Date.now()}`,
+        type: 'line',
+        source: {
+          type: 'geojson',
+          data: geojson
+        },
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': genRandomHexColor(),
+          'line-width': 5,
+          'line-opacity': 0.75
+        }
+      });
+    }
+
+    function fillStations() {
+      for (var station of chargingStations) {
+        new mapboxgl.Marker({ color: 'blue' })
+          .setLngLat(station.coordinates)
+          .setPopup(new mapboxgl.Popup().setText(station.name))
+          .addTo(map);
+      }
+    }
+
+    function getDistance(coord1, coord2) {
+      const [lon1, lat1] = coord1;
+      const [lon2, lat2] = coord2;
       const R = 6371; // Radius of the earth in km
       const dLat = deg2rad(lat2 - lat1);
       const dLon = deg2rad(lon2 - lon1);
       const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2)
-        ;
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const d = R * c; // Distance in km
       return d;
@@ -247,27 +213,11 @@
       return deg * (Math.PI / 180);
     }
 
-    function genRandomHexColor(){
-      return '#'+Math.floor(Math.random()*16777215).toString(16);
+    function genRandomHexColor() {
+      return '#' + Math.floor(Math.random() * 16777215).toString(16);
     }
 
-    // map.on('click', (e) => {
-    //   const coordinates = e.lngLat;
-    //   const name = getRandomName();
-    //   const station = {
-    //     name: name,
-    //     coordinates: [coordinates.lng, coordinates.lat]
-    //   };
-    //   chargingStations.push(station);
-
-    //   new mapboxgl.Marker()
-    //     .setLngLat([coordinates.lng, coordinates.lat])
-    //     .setPopup(new mapboxgl.Popup().setText(name))
-    //     .addTo(map);
-
-    //   console.log('Charging Stations:', chargingStations);
-    //   console.log(JSON.stringify(chargingStations));
-    // });
+    fillStations();
   </script>
 </body>
 </html>
