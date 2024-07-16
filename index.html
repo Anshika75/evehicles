@@ -157,32 +157,38 @@
     }
 
     function drawSegment(segment) {
-      const geojson = {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: segment
-        }
-      };
+      const directionsRequest = `https://api.mapbox.com/directions/v5/mapbox/driving/${segment[0][0]},${segment[0][1]};${segment[1][0]},${segment[1][1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+      fetch(directionsRequest)
+        .then(response => response.json())
+        .then(data => {
+          const route = data.routes[0].geometry.coordinates;
+          const geojson = {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: route
+            }
+          };
 
-      map.addLayer({
-        id: `route${Date.now()}`,
-        type: 'line',
-        source: {
-          type: 'geojson',
-          data: geojson
-        },
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': genRandomHexColor(),
-          'line-width': 5,
-          'line-opacity': 0.75
-        }
-      });
+          map.addLayer({
+            id: `route${Date.now()}`,
+            type: 'line',
+            source: {
+              type: 'geojson',
+              data: geojson
+            },
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': genRandomHexColor(),
+              'line-width': 5,
+              'line-opacity': 0.75
+            }
+          });
+        });
     }
 
     function fillStations() {

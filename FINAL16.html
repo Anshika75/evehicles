@@ -62,7 +62,6 @@
       href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css"
       type="text/css"
     />
-
     <script>
       mapboxgl.accessToken =
         "pk.eyJ1IjoibGVnaXRjb2RlciIsImEiOiJjbHEzczEwYmUwZmZxMnNxd3FwZWhjbzdmIn0.Jzm8D0cdCnrJrcInGe1p4Q";
@@ -1789,24 +1788,6 @@
           type: "0",
         },
         {
-          address: "Amenity Centre Kayamkulam, Alappuzha- 690502",
-          city: "Alazpuzha",
-          availability: 1,
-          contact: "",
-          isValidated: "1",
-          issue: 0,
-          lattitude: "NA",
-          longitude: "NA",
-          name: "ANERT-EESL KMML Chavara Kerala",
-          notes: "",
-          phones: "",
-          pincode: "690502",
-          pricing: "free",
-          state: "Kerala",
-          stationid: "93",
-          type: "0",
-        },
-        {
           address: "Secretariat Office, Goa",
           city: "Goa",
           availability: 1,
@@ -3104,7 +3085,7 @@
           for (let j = 0; j < allPoints.length; j++) {
             if (i !== j) {
               const distance = getDistance(allPoints[i], allPoints[j]);
-              if (distance <= MAX_COVERAGE * 2) {
+              if (distance <= MAX_COVERAGE * 3) {
                 graph[point][allPoints[j].join(",")] = distance;
               }
             }
