@@ -67891,7 +67891,7 @@
 
 const ALGO = {
   dijkstra: (graph, start, end) => {
-    console.log("Dijkstra");
+    console.log("Running Dijkstra Algorithm");
     const distances = {};
     const previous = {};
     const queue = new Set(Object.keys(graph));
@@ -67915,6 +67915,7 @@ const ALGO = {
           path.unshift(temp);
           temp = previous[temp];
         }
+        console.log('Dijkstra path:', path);
         return path;
       }
 
@@ -67933,7 +67934,7 @@ const ALGO = {
     return [];
   },
   aStar: (graph, start, end) => {
-    console.log("AStar");
+    console.log("Running A* Algorithm");
     const openSet = new Set([start]);
     const cameFrom = {};
 
@@ -67960,7 +67961,9 @@ const ALGO = {
       });
 
       if (current === end) {
-        return reconstructPath(cameFrom, current);
+        const path = reconstructPath(cameFrom, current);
+        console.log('A* path:', path);
+        return path;
       }
 
       openSet.delete(current);
@@ -68010,6 +68013,7 @@ function getRoute() {
 function findOptimalRoute(start, end, ALGORITHM) {
   const graph = buildGraph(chargingStations, start, end);
   const path = ALGORITHM(graph, start.join(","), end.join(","));
+  console.log('Optimal route:', path);
   return path.map((point) => point.split(",").map(Number));
 }
 
@@ -68034,6 +68038,7 @@ function buildGraph(stations, start, end) {
       }
     }
   }
+  console.log('Graph:', graph);
   return graph;
 }
 
@@ -68141,10 +68146,9 @@ function deg2rad(deg) {
 }
 
 function heuristic(start, end) {
-  return getDistance(
-    start.split(",").map(Number),
-    end.split(",").map(Number)
-  );
+  const [x1, y1] = start.split(",").map(Number);
+  const [x2, y2] = end.split(",").map(Number);
+  return Math.abs(x1 - x2) + Math.abs(y1 - y2);
 }
 
 function reconstructPath(cameFrom, current) {
@@ -68161,17 +68165,26 @@ function fillStations() {
     const st = document.createElement("div");
     st.className = "pump";
     st.style.fontSize = "10px";
-    st.style.transform = "rotate(50deg)";
-    st.style.color = "blue";
+    st.style.transform = "rotate(-20deg)";
     st.innerHTML = "⛽";
-    new mapboxgl.Marker(st)
+
+    const marker = new mapboxgl.Marker(st)
       .setLngLat([station.longitude, station.latitude])
-      .setPopup(new mapboxgl.Popup().setText(station.name))
+      .setPopup(
+        new mapboxgl.Popup().setHTML(
+          `<h6>Charging Station</h6><br/><b>Type:</b>${station.connector_type}<br/><b>City:</b>${station.city}<br/><b>State:</b>${station.state}`
+        )
+      )
       .addTo(map);
   }
 }
 
-fillStations();
+map.on("load", function () {
+  fillStations();
+});
+
+
+
 
     </script>
   </body>
