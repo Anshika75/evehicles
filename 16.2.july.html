@@ -41,9 +41,8 @@
         placeholder="Enter destination"
       />
       <select name="algorithm" id="chooseAlgo">
-        <option value="aStar" selected>A Star</option>
-        <option value="dijkstra">Dijkstra</option>
-        
+        <option value="dijkstra" selected>Dijkstra</option>
+        <option value="aStar">A Star</option>
       </select>
       <button onclick="FormSubmitGetRoute()">Get Route</button>
     </div>
@@ -67,7 +66,7 @@
         zoom: 9,
       });
 
-      const MAX_COVERAGE = 10; // in kilometers
+      const MAX_COVERAGE = 30; // in kilometers
 
       const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
@@ -67893,6 +67892,49 @@
 }
 
 const ALGO = {
+  dijkstra: (graph, start, end) => {
+    console.log("Running Dijkstra Algorithm");
+    const distances = {};
+    const previous = {};
+    const queue = new Set(Object.keys(graph));
+
+    for (const point of queue) {
+      distances[point] = Infinity;
+      previous[point] = null;
+    }
+    distances[start] = 0;
+
+    while (queue.size > 0) {
+      const current = Array.from(queue).reduce((min, point) =>
+        distances[point] < distances[min] ? point : min
+      );
+
+      if (current === end) {
+        const path = [];
+        let temp = current;
+
+        while (temp) {
+          path.unshift(temp);
+          temp = previous[temp];
+        }
+        console.log('Dijkstra path:', path);
+        return path;
+      }
+
+      queue.delete(current);
+
+      for (const neighbor in graph[current]) {
+        const alt = distances[current] + graph[current][neighbor];
+
+        if (alt < distances[neighbor]) {
+          distances[neighbor] = alt;
+          previous[neighbor] = current;
+        }
+      }
+    }
+
+    return [];
+  },
   aStar: (graph, start, end) => {
     console.log("Running A* Algorithm");
     const openSet = new Set([start]);
@@ -67946,52 +67988,7 @@ const ALGO = {
 
     return [];
   },
-
-  dijkstra: (graph, start, end) => {
-    console.log("Running Dijkstra Algorithm");
-    const distances = {};
-    const previous = {};
-    const queue = new Set(Object.keys(graph));
-
-    for (const point of queue) {
-      distances[point] = Infinity;
-      previous[point] = null;
-    }
-    distances[start] = 0;
-
-    while (queue.size > 0) {
-      const current = Array.from(queue).reduce((min, point) =>
-        distances[point] < distances[min] ? point : min
-      );
-
-      if (current === end) {
-        const path = [];
-        let temp = current;
-
-        while (temp) {
-          path.unshift(temp);
-          temp = previous[temp];
-        }
-        console.log('Dijkstra path:', path);
-        return path;
-      }
-
-      queue.delete(current);
-
-      for (const neighbor in graph[current]) {
-        const alt = distances[current] + graph[current][neighbor];
-
-        if (alt < distances[neighbor]) {
-          distances[neighbor] = alt;
-          previous[neighbor] = current;
-        }
-      }
-    }
-
-    return [];
-  },
-
-  };
+};
 
 function getRoute() {
   if (!StartCoord || !DestCoord) {
@@ -68037,7 +68034,7 @@ function buildGraph(stations, start, end) {
     for (let j = 0; j < allPoints.length; j++) {
       if (i !== j) {
         const distance = getDistance(allPoints[i], allPoints[j]);
-        if (distance <= MAX_COVERAGE) {
+        if (distance <= MAX_COVERAGE * 2) {
           graph[point][allPoints[j].join(",")] = distance;
         }
       }
